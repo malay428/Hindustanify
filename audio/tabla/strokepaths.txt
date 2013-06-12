@@ -1,0 +1,18 @@
+tablestrokes={
+'dhen': '/audio/tabla/171897__ajaysm__dhen-stroke.wav',
+'dhec': '/audio/tabla/171898__ajaysm__dhec-stroke.wav',
+'dhe': '/audio/tabla/171899__ajaysm__dhe-stroke.wav',
+'dha': '/audio/tabla/171900__ajaysm__dha-stroke.wav',
+'ka': '/audio/tabla/171901__ajaysm__ka-stroke.wav',
+'ga': '/audio/tabla/171902__ajaysm__ga-stroke.wav',
+'dhun': '/audio/tabla/171903__ajaysm__dhun-stroke.wav',
+'dhin': '/audio/tabla/171904__ajaysm__dhin-stroke.wav',
+'na': '/audio/tabla/171905__ajaysm__na-stroke.wav',
+'kat': '/audio/tabla/171906__ajaysm__kat-stroke.wav',
+'re': '/audio/tabla/171907__ajaysm__re-stroke.wav',
+'ne': '/audio/tabla/171908__ajaysm__ne-stroke.wav',
+'tun': '/audio/tabla/171909__ajaysm__tun-stroke.wav',
+'tak': '/audio/tabla/171910__ajaysm__tak-stroke.wav',
+'tin': '/audio/tabla/171911__ajaysm__tin-stroke.wav',
+'tit': '/audio/tabla/171912__ajaysm__tit-stroke.wav',
+'te': '/audio/tabla/171913__ajaysm__te-stroke.wav'}
