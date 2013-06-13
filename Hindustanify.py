@@ -43,17 +43,23 @@ DroneNotes = ['D','E','F#','A','C']
 
 TalaInfo = {
 'teental': ['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
-'keherwa': ['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
-'bhajan': ['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta']
+'keherwa': ['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na', 'ta'],
+'bhajan': ['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta', 'dha']
 }
 
 TalaInfoFULL = {
-'teental': {'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
+'teental': {'normal':{'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
 			'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]},
-'keherwa': {'bols':['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
+			'roll': {'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
+			'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]}},
+'keherwa': {'normal':{'bols':['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
 			'durratio':[0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]},
-'bhajan': {'bols':['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta'],
-			'durratio':[0.0, 0.125, 0.1875, 0.3125, 0.375, 0.5,  0.625, 0.6875,  0.8125, 0.875]}
+			'roll': {'bols':['dha', 'dhin', 'ta', 'dha', 'dhin', 'ta', 'dha', 'dhin', 'ta'],
+			'durratio':[0.0, 0.0625, 0.1875, 0.3125, 0.375, 0.5, 0.625, 0.6875, 0.8125]}},
+'bhajan': {'normal':{'bols':['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta'],
+			'durratio':[0.0, 0.125, 0.1875, 0.3125, 0.375, 0.5,  0.625, 0.6875,  0.8125, 0.875]},
+			'roll': {'bols':['dha', 'dhin', 'ta', 'dha', 'dhin', 'ta', 'dha', 'dhin', 'ta'],
+			'durratio':[0.0, 0.0625, 0.1875, 0.3125, 0.375, 0.5, 0.625, 0.6875, 0.8125]}}
 }
 
 notes = {'C':0, 'C#':1,'D':2,'D#':3,'E':4, 'F':5, 'F#':6, 'G':7,'G#':8,'A':9,'A#':10,'B':11}
@@ -69,7 +75,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
   
 	### reading tabla strokes files
 	strokes={}
-	for bol in numpy.unique(TalaInfo[taal]):
+	for bol in numpy.unique(TalaInfoFULL[taal]['normal']['bols'] + TalaInfoFULL[taal]['roll']['bols'] ):
 		strokes[bol] = audio.AudioData(TablaStrokesPath[bol])
 		strokes[bol].data = AmplitudeFactorTablaStrokes*strokes[bol].data[:,0]
 		strokes[bol].numChannels = 1	
@@ -117,11 +123,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 		drone_index = drone_index + new_audio_data.data.shape[0]
 
 		# adding drone signal
-		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.9) 
-	    
-	    
-		#adding tabla strokes
-	      
+		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.8) 
 
 		output.append(new_audio_data)
 	    
@@ -130,7 +132,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 		if drone_index > (dronefiledutation-(2*beat.duration))*dronefile.sampleRate:
 			drone_index=0
 	
-	output = AddTabla(output,audiofile.analysis.bars,tempoREDpc, taal, strokes)		
+	output = AddTabla(output,audiofile.analysis.bars, audiofile.analysis.sections, tempoREDpc, taal, strokes)		
 	'''print "started tabla strokes addition"
 	for i, tatum in enumerate(audiofile.analysis.tatums[2:-1]):
 		
@@ -141,8 +143,8 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 		'''
 	
 	output.encode(outputfile)
-	
-def AddTabla(audiodata, bars, tempofactor, taal, strokes):
+
+def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 	
 	if taal == 'teental':
 
@@ -156,11 +158,27 @@ def AddTabla(audiodata, bars, tempofactor, taal, strokes):
 					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['durratio'][j]) ,strokes[bol])
 			
 	else:
+		section_cnt =0 ;
 		for i,bar in enumerate(bars):
+			section_offset = sections[section_cnt].start + sections[section_cnt].duration
+			print section_offset
+			print bar.end
+			if bar.end >= section_offset:
+				print "hello"
+				play_roll =1
+				section_cnt = section_cnt+1
+			else:
+				play_roll = 0
 			bar_onset = bar.start/tempofactor
 			bar_duration = bar.duration/tempofactor
-			for j, bol in enumerate(TalaInfoFULL[taal]['bols']):
-				audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['durratio'][j]) ,strokes[bol]) 
+			
+			if play_roll ==0:
+				for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
+					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['normal']['durratio'][j]) ,strokes[bol])
+			else:
+				for j, bol in enumerate(TalaInfoFULL[taal]['roll']['bols']):
+					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['roll']['durratio'][j]) ,strokes[bol])
+			
 
 	return audiodata
 	
