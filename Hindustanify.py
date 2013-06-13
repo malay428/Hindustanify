@@ -71,7 +71,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 	soundtouch = modify.Modify()
   
 	### Important parameters
-	AmplitudeFactorTablaStrokes = 0.15
+	AmplitudeFactorTablaStrokes = 0.25
     
   
 	### reading tabla strokes files
@@ -147,16 +147,11 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 
 def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 	
-	old_bars = bars
-	print bars
-	print "%%%%%%%%%%%%%%%%%\n"
 	if tempofactor <=0.5:
 		New_bars = [None]*(len(bars) + len(bars))
 		New_bars[::2] = deepcopy(bars)
 		New_bars[1::2] = deepcopy(bars)
-		
-		print New_bars
-		print "%%%%%%%%%%%%%%%%%\n"		
+	
 		for i,bar in enumerate(New_bars):
 			
 			if i%2 ==0:
@@ -165,8 +160,7 @@ def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 				New_bars[i].start = New_bars[i-1].start + New_bars[i-1].duration
 				New_bars[i].duration = New_bars[i].duration/2
 				
-	bars = deepcopy(New_bars)
-	print bars
+		bars = deepcopy(New_bars)
 	
 	if taal == 'teental':
 
