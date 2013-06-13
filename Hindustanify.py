@@ -8,10 +8,7 @@ import sys, pyechonest, yaml, json
 from echonest.remix import audio,modify
 from pyechonest import config
 
-
-audio
-
-
+config.ECHO_NEST_API_KEY="KE3VARQVC26QKIGED"
 
 ########################## Global variables ##########################################
 TablaStrokesPath={
@@ -48,6 +45,15 @@ TalaInfo = {
 'teental': ['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
 'keherwa': ['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
 'bhajan': ['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta']
+}
+
+TalaInfoFULL = {
+'teental': {'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
+			'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]},
+'keherwa': {'bols':['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
+			'durratio':[0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]},
+'bhajan': {'bols':['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta'],
+			'durratio':[0.0, 0.125, 0.1875, 0.3125, 0.375, 0.5,  0.625, 0.6875,  0.8125, 0.875]}
 }
 
 notes = {'C':0, 'C#':1,'D':2,'D#':3,'E':4, 'F':5, 'F#':6, 'G':7,'G#':8,'A':9,'A#':10,'B':11}
@@ -99,8 +105,8 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
     
 	for i, beat in enumerate(beats):
 	    
-		if beat.end > audiofile.duration/6:
-			tempoREDpc=1
+		#if beat.end > audiofile.duration/6:
+			#tempoREDpc=1
 		#reading chunk of audio
 		data = audiofile[beat]
 		#slowing things down
@@ -123,18 +129,42 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 		#check if the beat counter for drone might cross the drone duration
 		if drone_index > (dronefiledutation-(2*beat.duration))*dronefile.sampleRate:
 			drone_index=0
-			
-	print "started tabla strokes addition"
+	
+	output = AddTabla(output,audiofile.analysis.bars,tempoREDpc, taal, strokes)		
+	'''print "started tabla strokes addition"
 	for i, tatum in enumerate(audiofile.analysis.tatums[2:-1]):
 		
 		onset = (tatum.end - tatum.duration)
 		print onset
 		print type(strokes[tablaaudio2(i,taal)])
 		output.add_at(onset,strokes[tablaaudio2(i,taal)])
-		
+		'''
 	
 	output.encode(outputfile)
 	
+def AddTabla(audiodata, bars, tempofactor, taal, strokes):
+	
+	if taal == 'teental':
+
+		for i,bar in enumerate(bars):
+			if i%2 == 0:
+				bar_onset = bar.start/tempofactor
+				bar_duration = bar.duration/tempofactor
+			if i%2 ==1:
+				bar_duration = bar_duration + (bar.duration/tempofactor)
+				for j, bol in enumerate(TalaInfoFULL[taal]['bols']):
+					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['durratio'][j]) ,strokes[bol])
+			
+	else:
+		for i,bar in enumerate(bars):
+			bar_onset = bar.start/tempofactor
+			bar_duration = bar.duration/tempofactor
+			for j, bol in enumerate(TalaInfoFULL[taal]['bols']):
+				audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['durratio'][j]) ,strokes[bol]) 
+
+	return audiodata
+	
+		
 def tablaaudio2(tatumcnt, taal):
 	
 	index = numpy.mod(tatumcnt, len(TalaInfo[taal]))
