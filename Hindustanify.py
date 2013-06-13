@@ -34,15 +34,28 @@ TablaStrokesPath={
 'tit': 'audio/tabla/171912__ajaysm__tit-stroke.wav',
 'te': 'audio/tabla/171913__ajaysm__te-stroke.wav'}
 
+Dronefiles ={
+'D': 'audio/drone/155480__sankalp__electronic-tanpura-12.wav',
+'E': 'audio/drone/155485__sankalp__electronic-tanpura-15.wav',
+'F#': 'audio/drone/155489__sankalp__electronic-tanpura-18.wav',
+'A': 'audio/drone/155494__sankalp__electronic-tanpura-6.wav',
+'C': 'audio/drone/155500__sankalp__electronic-tanpura-3.wav'
+}
+DroneScales = numpy.array([2, 4 ,6 ,9 ,0])
+DroneNotes = ['D','E','F#','A','C']
+
 TalaInfo = {
 'teental': ['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
 'keherwa': ['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
 'bhajan': ['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta']
 }
 
+notes = {'C':0, 'C#':1,'D':2,'D#':3,'E':4, 'F':5, 'F#':6, 'G':7,'G#':8,'A':9,'A#':10,'B':11}
 
 
 def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
+
+	soundtouch = modify.Modify()
   
 	### Important parameters
 	AmplitudeFactorTablaStrokes = 0.15
@@ -58,16 +71,18 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
     
 	# reading input file and performning audio analsis
 	audiofile = audio.LocalAudioFile(inputfile)
-	#key = audiofile.
-	#mode = audiofile.
+	key = audiofile.analysis.key['value']
+	mode = audiofile.analysis.mode['value']
     
-    
+	get_drone_file, transposition_index = GetDroneFileandTransIndex(key, mode)
 	
 	#reading audio from drone file
 	#C
-	dronefile = audio.AudioData('drone_C.wav')
+	dronefile = audio.AudioData(get_drone_file)
 	dronefile.data = dronefile.data[:,0]
 	dronefile.numChannels =1
+	dronefile = soundtouch.shiftPitchSemiTones(dronefile, transposition_index)
+	
 	print "Drone file read"
 	#print "number of channels " + str(dronefile.numChannels)
 	#dronefile = mono_to_stereo(dronefile)
@@ -79,7 +94,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 	output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
 	final_out = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
     
-	soundtouch = modify.Modify()
+
 	drone_index=0
     
 	for i, beat in enumerate(beats):
@@ -142,7 +157,14 @@ def tablaaudio(downbeatcnt, beatcnt, tatumcnt, taal):
 	return TalaInfo[taal][index]
       
 
-
+def GetDroneFileandTransIndex(key, mode):
+	abs_diff = numpy.abs(DroneScales-key)
+	index = numpy.argmin(abs_diff)
+	
+	transposition = key-DroneScales[index]
+	
+	return Dronefiles[DroneNotes[index]], transposition
+	
 
 if __name__=="__main__":
   
