@@ -1,6 +1,7 @@
 #! /usr/bin/python
 import numpy
 import os, sys
+from copy import copy, deepcopy
 import random
 import sys
 import time
@@ -146,6 +147,27 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 
 def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 	
+	old_bars = bars
+	print bars
+	print "%%%%%%%%%%%%%%%%%\n"
+	if tempofactor <=0.5:
+		New_bars = [None]*(len(bars) + len(bars))
+		New_bars[::2] = deepcopy(bars)
+		New_bars[1::2] = deepcopy(bars)
+		
+		print New_bars
+		print "%%%%%%%%%%%%%%%%%\n"		
+		for i,bar in enumerate(New_bars):
+			
+			if i%2 ==0:
+				New_bars[i].duration= New_bars[i].duration/2
+			else:
+				New_bars[i].start = New_bars[i-1].start + New_bars[i-1].duration
+				New_bars[i].duration = New_bars[i].duration/2
+				
+	bars = deepcopy(New_bars)
+	print bars
+	
 	if taal == 'teental':
 
 		for i,bar in enumerate(bars):
@@ -161,8 +183,6 @@ def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 		section_cnt =0 ;
 		for i,bar in enumerate(bars):
 			section_offset = sections[section_cnt].start + sections[section_cnt].duration
-			print section_offset
-			print bar.end
 			if bar.end >= section_offset:
 				print "hello"
 				play_roll =1
