@@ -9,7 +9,7 @@ from echonest.remix import audio,modify
 from pyechonest import config
 
 
-config.ECHO_NEST_API_KEY="KE3VARQVC26QKIGED"
+audio
 
 
 
@@ -44,61 +44,69 @@ TalaInfo = {
 
 def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
   
+	### Important parameters
+	AmplitudeFactorTablaStrokes = 0.15
+    
   
-	#reading tabla strokes files
+	### reading tabla strokes files
 	strokes={}
 	for bol in numpy.unique(TalaInfo[taal]):
 		strokes[bol] = audio.AudioData(TablaStrokesPath[bol])
-		strokes[bol].data = 0.15*strokes[bol].data[:,0]
-		strokes[bol].numChannels = 1
+		strokes[bol].data = AmplitudeFactorTablaStrokes*strokes[bol].data[:,0]
+		strokes[bol].numChannels = 1	
 	
-	print strokes.keys()
-	#reading file and performning audio analsis
+    
+	# reading input file and performning audio analsis
 	audiofile = audio.LocalAudioFile(inputfile)
+	#key = audiofile.
+	#mode = audiofile.
+    
+    
 	
 	#reading audio from drone file
 	#C
-	dronefile = audio.AudioData('drone_C.wav', numChannels=1)
+	dronefile = audio.AudioData('drone_C.wav')
+	dronefile.data = dronefile.data[:,0]
+	dronefile.numChannels =1
+	print "Drone file read"
 	#print "number of channels " + str(dronefile.numChannels)
 	#dronefile = mono_to_stereo(dronefile)
 	#print "number of channels " + str(dronefile.numChannels)
 	dronefiledutation = dronefile.duration
-	
-	
-	
+    
 	beats = audiofile.analysis.beats
 	outputshape = (len(audiofile.data),)
 	output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
 	final_out = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
-	
+    
 	soundtouch = modify.Modify()
 	drone_index=0
-	
+    
 	for i, beat in enumerate(beats):
 	    
-	    if beat.end > audiofile.duration/6:
-		      tempoREDpc=1
-	    #reading chunk of audio
-	    data = audiofile[beat]
-	    #slowing things down
-	    new_audio_data = soundtouch.shiftTempo(audiofile[beat],tempoREDpc)
+		if beat.end > audiofile.duration/6:
+			tempoREDpc=1
+		#reading chunk of audio
+		data = audiofile[beat]
+		#slowing things down
+		new_audio_data = soundtouch.shiftTempo(audiofile[beat],tempoREDpc)
 
-	    #reading drone chunk by chunk
-	    drone_chunk = dronefile[drone_index:drone_index+ new_audio_data.data.shape[0]]
-	    drone_index = drone_index + new_audio_data.data.shape[0]
+		#reading drone chunk by chunk
+		drone_chunk = dronefile[drone_index:drone_index+ new_audio_data.data.shape[0]]
+		drone_index = drone_index + new_audio_data.data.shape[0]
 
-	    # adding drone signal
-	    new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.9) 
+		# adding drone signal
+		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.9) 
 	    
 	    
-	    #adding tabla strokes
+		#adding tabla strokes
 	      
 
-	    output.append(new_audio_data)
+		output.append(new_audio_data)
 	    
 	    
-	    #check if the beat counter for drone might cross the drone duration
-	    if drone_index > (dronefiledutation-(2*beat.duration))*dronefile.sampleRate:
+		#check if the beat counter for drone might cross the drone duration
+		if drone_index > (dronefiledutation-(2*beat.duration))*dronefile.sampleRate:
 			drone_index=0
 			
 	print "started tabla strokes addition"
