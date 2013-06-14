@@ -8,6 +8,7 @@ import time
 import sys, pyechonest, yaml, json
 from echonest.remix import audio,modify
 from pyechonest import config
+import math
 
 config.ECHO_NEST_API_KEY="KE3VARQVC26QKIGED"
 
@@ -228,6 +229,35 @@ def GetDroneFileandTransIndex(key, mode):
 	return Dronefiles[DroneNotes[index]], transposition
 	
 
+def AddGamakas(inputfile, outputfile):
+
+	soundtouch = modify.Modify()
+  
+  	# reading input file and performning audio analsis
+	audiofile = audio.LocalAudioFile(inputfile)
+	key = audiofile.analysis.key['value']
+	mode = audiofile.analysis.mode['value']
+    
+	beats = audiofile.analysis.beats
+	outputshape = (len(audiofile.data),)
+	output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
+	
+	sr = audiofile.sampleRate
+	wlen = 0.1
+	framelen=int(math.floor(wlen*sr))
+	nos = int(math.floor(audiofile.duration/wlen))
+	
+	for ii in range(0,nos):
+		audiodata = audiofile[ii*framelen:(ii+1)*framelen,:]
+		ratio = 2*math.sin(2*math.pi*ii*wlen*4)
+		print ratio
+		new_data = soundtouch.shiftPitchSemiTones(audiodata, semitones = int(math.floor(ratio + 0.5)))
+		output.append(new_data)
+	
+	output.encode(outputfile)
+		
+	
+	
 if __name__=="__main__":
   
 	inputfile = sys.argv[0]
@@ -235,7 +265,7 @@ if __name__=="__main__":
 	tempoREDpc = sys.argv[2]
 	taal = sys.argv[3]
 	
-	Hindustanify_main(inputfile, outputfile, tempoREDpc, taal)
+	Hindustanify_main(inputfile, outputfile, float(tempoREDpc), taal)
 	
   
 
