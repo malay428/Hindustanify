@@ -1,4 +1,5 @@
-#! /usr/bin/python
+#!/usr/bin/python
+
 import numpy
 import os, sys
 from copy import copy, deepcopy
@@ -171,7 +172,7 @@ def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 				bar_duration = bar.duration/tempofactor
 			if i%2 ==1:
 				bar_duration = bar_duration + (bar.duration/tempofactor)
-				for j, bol in enumerate(TalaInfoFULL[taal]['bols']):
+				for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
 					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['durratio'][j]) ,strokes[bol])
 			
 	else:
@@ -260,10 +261,10 @@ def AddGamakas(inputfile, outputfile):
 	
 if __name__=="__main__":
   
-	inputfile = sys.argv[0]
-	outputfile = sys.argv[1]
-	tempoREDpc = sys.argv[2]
-	taal = sys.argv[3]
+	inputfile = sys.argv[1]
+	outputfile = sys.argv[2]
+	tempoREDpc = sys.argv[3]
+	taal = sys.argv[4]
 	
 	Hindustanify_main(inputfile, outputfile, float(tempoREDpc), taal)
 	
