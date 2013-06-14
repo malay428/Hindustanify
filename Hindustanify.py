@@ -98,7 +98,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 	dronefile.numChannels =1
 	dronefile = soundtouch.shiftPitchSemiTones(dronefile, transposition_index)
 	
-	print "Drone file read"
+	#print "Drone file read"
 	#print "number of channels " + str(dronefile.numChannels)
 	#dronefile = mono_to_stereo(dronefile)
 	#print "number of channels " + str(dronefile.numChannels)
@@ -180,7 +180,7 @@ def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 		for i,bar in enumerate(bars):
 			section_offset = sections[section_cnt].start + sections[section_cnt].duration
 			if bar.end >= section_offset:
-				print "hello"
+				#print "hello"
 				play_roll =1
 				section_cnt = section_cnt+1
 			else:
@@ -251,7 +251,7 @@ def AddGamakas(inputfile, outputfile):
 	for ii in range(0,nos):
 		audiodata = audiofile[ii*framelen:(ii+1)*framelen,:]
 		ratio = 2*math.sin(2*math.pi*ii*wlen*4)
-		print ratio
+		#print ratio
 		new_data = soundtouch.shiftPitchSemiTones(audiodata, semitones = int(math.floor(ratio + 0.5)))
 		output.append(new_data)
 	
