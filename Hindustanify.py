@@ -73,7 +73,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 	soundtouch = modify.Modify()
   
 	### Important parameters
-	AmplitudeFactorTablaStrokes = 0.25
+	AmplitudeFactorTablaStrokes = 0.4
     
   
 	### reading tabla strokes files
@@ -126,7 +126,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 		drone_index = drone_index + new_audio_data.data.shape[0]
 
 		# adding drone signal
-		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.8) 
+		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.7) 
 
 		output.append(new_audio_data)
 	    
