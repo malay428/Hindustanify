@@ -173,7 +173,7 @@ def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
 			if i%2 ==1:
 				bar_duration = bar_duration + (bar.duration/tempofactor)
 				for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
-					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['durratio'][j]) ,strokes[bol])
+					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['normal']['durratio'][j]) ,strokes[bol])
 			
 	else:
 		section_cnt =0 ;
