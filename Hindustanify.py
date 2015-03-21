@@ -73,7 +73,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 	soundtouch = modify.Modify()
   
 	### Important parameters
-	AmplitudeFactorTablaStrokes = 0.4
+	AmplitudeFactorTablaStrokes = 0.55
     
   
 	### reading tabla strokes files
@@ -126,7 +126,7 @@ def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 		drone_index = drone_index + new_audio_data.data.shape[0]
 
 		# adding drone signal
-		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.7) 
+		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.5) 
 
 		output.append(new_audio_data)
 	    
@@ -226,7 +226,7 @@ def GetDroneFileandTransIndex(key, mode):
 	index = numpy.argmin(abs_diff)
 	
 	transposition = key-DroneScales[index]
-	
+	print  Dronefiles[DroneNotes[index]], transposition
 	return Dronefiles[DroneNotes[index]], transposition
 	
 
@@ -261,6 +261,10 @@ def AddGamakas(inputfile, outputfile):
 	
 if __name__=="__main__":
   
+  	# Python script to transform an audio song into a Hindustani music piece :D
+  	# arguments:
+  	# <pythonfile><inputaudio><outputaudio><tempofactor(1 = no change)><taal(rhythm cycle)>
+  	
 	inputfile = sys.argv[1]
 	outputfile = sys.argv[2]
 	tempoREDpc = sys.argv[3]
