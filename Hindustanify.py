@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import numpy
 import os, sys
 from copy import copy, deepcopy
@@ -10,6 +9,10 @@ import sys, pyechonest, yaml, json
 from echonest.remix import audio,modify
 from pyechonest import config
 import math
+import essentia.standard as ess
+import essentia as es
+import mutagen
+import numpy as np
 
 config.ECHO_NEST_API_KEY="KE3VARQVC26QKIGED"
 
@@ -52,17 +55,17 @@ TalaInfo = {
 
 TalaInfoFULL = {
 'teental': {'normal':{'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
-			'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]},
-			'roll': {'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
-			'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]}},
+            'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]},
+            'roll': {'bols':['dha', 'dhin', 'dhin', 'dha', 'dha', 'dhin', 'dhin', 'dha', 'dha', 'tin', 'tin', 'ta', 'ta', 'dhin', 'dhin', 'dha'],
+            'durratio':[0.0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375]}},
 'keherwa': {'normal':{'bols':['dha', 'ga', 'na', 'te', 'na', 'ka', 'dhin', 'na'],
-			'durratio':[0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]},
-			'roll': {'bols':['dha', 'dhin', 'ta', 'dha', 'dhin', 'ta', 'dha', 'dhin', 'ta'],
-			'durratio':[0.0, 0.0625, 0.1875, 0.3125, 0.375, 0.5, 0.625, 0.6875, 0.8125]}},
+            'durratio':[0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]},
+            'roll': {'bols':['dha', 'dhin', 'ta', 'dha', 'dhin', 'ta', 'dha', 'dhin', 'ta'],
+            'durratio':[0.0, 0.0625, 0.1875, 0.3125, 0.375, 0.5, 0.625, 0.6875, 0.8125]}},
 'bhajan': {'normal':{'bols':['dhin', 'ta', 'dhin', 'dhin', 'ta', 'tin', 'ta', 'tin', 'tin', 'ta'],
-			'durratio':[0.0, 0.125, 0.1875, 0.3125, 0.375, 0.5,  0.625, 0.6875,  0.8125, 0.875]},
-			'roll': {'bols':['dha', 'dhin', 'ta', 'dha', 'dhin', 'ta', 'dha', 'dhin', 'ta'],
-			'durratio':[0.0, 0.0625, 0.1875, 0.3125, 0.375, 0.5, 0.625, 0.6875, 0.8125]}}
+            'durratio':[0.0, 0.125, 0.1875, 0.3125, 0.375, 0.5,  0.625, 0.6875,  0.8125, 0.875]},
+            'roll': {'bols':['dha', 'dhin', 'ta', 'dha', 'dhin', 'ta', 'dha', 'dhin', 'ta'],
+            'durratio':[0.0, 0.0625, 0.1875, 0.3125, 0.375, 0.5, 0.625, 0.6875, 0.8125]}}
 }
 
 notes = {'C':0, 'C#':1,'D':2,'D#':3,'E':4, 'F':5, 'F#':6, 'G':7,'G#':8,'A':9,'A#':10,'B':11}
@@ -70,207 +73,229 @@ notes = {'C':0, 'C#':1,'D':2,'D#':3,'E':4, 'F':5, 'F#':6, 'G':7,'G#':8,'A':9,'A#
 
 def Hindustanify_main(inputfile, outputfile, tempoREDpc, taal):
 
-	soundtouch = modify.Modify()
+    #soundtouch = modify.Modify()    #TODO: remove this line
   
-	### Important parameters
-	AmplitudeFactorTablaStrokes = 0.55
+    ### Important parameters
+    AmplitudeFactorTablaStrokes = 0.55
     
   
-	### reading tabla strokes files
-	strokes={}
-	for bol in numpy.unique(TalaInfoFULL[taal]['normal']['bols'] + TalaInfoFULL[taal]['roll']['bols'] ):
-		strokes[bol] = audio.AudioData(TablaStrokesPath[bol])
-		strokes[bol].data = AmplitudeFactorTablaStrokes*strokes[bol].data[:,0]
-		strokes[bol].numChannels = 1	
-	
+    ### reading tabla strokes files
+    strokes={}
+    for bol in numpy.unique(TalaInfoFULL[taal]['normal']['bols'] + TalaInfoFULL[taal]['roll']['bols'] ):
+        #strokes[bol] = audio.AudioData(TablaStrokesPath[bol])    #TODO: remove this line
+        #strokes[bol].data = AmplitudeFactorTablaStrokes*strokes[bol].data[:,0]    #TODO: remove this line
+        #strokes[bol].numChannels = 1    #TODO: remove this line
+        strokes[bol] = ess.MonoLoader(filename = TablaStrokesPath[bol])()
+
     
-	# reading input file and performning audio analsis
-	audiofile = audio.LocalAudioFile(inputfile)
-	key = audiofile.analysis.key['value']
-	mode = audiofile.analysis.mode['value']
     
-	get_drone_file, transposition_index = GetDroneFileandTransIndex(key, mode)
-	
-	#reading audio from drone file
-	#C
-	dronefile = audio.AudioData(get_drone_file)
-	dronefile.data = dronefile.data[:,0]
-	dronefile.numChannels =1
-	dronefile = soundtouch.shiftPitchSemiTones(dronefile, transposition_index)
-	
-	#print "Drone file read"
-	#print "number of channels " + str(dronefile.numChannels)
-	#dronefile = mono_to_stereo(dronefile)
-	#print "number of channels " + str(dronefile.numChannels)
-	dronefiledutation = dronefile.duration
+    # reading input file and performning audio analsis
+    #audiofile = audio.LocalAudioFile(inputfile)    #TODO: remove this line
+    #key = audiofile.analysis.key['value']    #TODO: remove this line
+    #mode = audiofile.analysis.mode['value']    #TODO: remove this line
+
+    audio = ess.MonoLoader(filename = inputfile)()
+    fs = mutagen.mp3.MPEGInfo(open(inputfile)).sample_rate
+    keyData = ess.KeyExtractor()(audio)
+    key = notes[keyData[0]]
+    mode = keyData[1]
     
-	beats = audiofile.analysis.beats
-	outputshape = (len(audiofile.data),)
-	output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
-	final_out = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
+    
+    get_drone_file, transposition_index = GetDroneFileandTransIndex(key, mode)
+    
+    #reading audio from drone file
+    #C
+    #dronefile = audio.AudioData(get_drone_file)    #TODO: remove this line
+    #dronefile.data = dronefile.data[:,0]    #TODO: remove this line
+    #dronefile.numChannels =1                 #TODO: remove this line
+    #dronefile = soundtouch.shiftPitchSemiTones(dronefile, transposition_index)    #TODO: remove this line
+    droneAudio = ess.MonoLoader(filename = get_drone_file)()
+
+    #print "Drone file read"
+    #print "number of channels " + str(dronefile.numChannels)
+    #dronefile = mono_to_stereo(dronefile)
+    #print "number of channels " + str(dronefile.numChannels)
+    droneAudioLen = droneAudio.shape[0]
+        
+    #beats = audiofile.analysis.beats    #TODO: remove this line
+
+    beats = ess.RhythmExtractor2013()(audio)[1]
+
+    outputshape = audio.shape
+    #output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
+    output  = np.zeros(outputshape, dtype=np.float32)
+    #final_out = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
+
     
 
-	drone_index=0
+    drone_index=0
+    last_beat_loc = 0
+    drone_mix_ratio = 0.2
+    for ii in np.arange(len(beats)):
+        
+        strInd = np.floor(last_beat_loc*fs)
+        endInd = np.floor(beats[ii]*fs)-1
+
+        #reading chunk of audio
+        data = audio[strInd:endInd]
+        #slowing things down
+        #new_audio_data = soundtouch.shiftTempo(data,tempoREDpc)    #TODO: remove this line
+        new_audio_data = data
+
+        #reading drone chunk by chunk
+        drone_chunk = droneAudio[drone_index:drone_index+ new_audio_data.shape[0]]
+        drone_index = drone_index + new_audio_data.shape[0]
+
+        # adding drone signal
+        #new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.5)     #TODO remove
+        new_audio_data = data*(1-drone_mix_ratio) + drone_chunk*drone_mix_ratio
+
+        output[strInd:endInd] = new_audio_data
+        
+        
+        #check if the beat counter for drone might cross the drone duration
+        if drone_index > droneAudioLen*.8:
+            drone_index=0
+
+        last_beat_loc = beats[ii]
     
-	for i, beat in enumerate(beats):
-	    
-		#if beat.end > audiofile.duration/6:
-			#tempoREDpc=1
-		#reading chunk of audio
-		data = audiofile[beat]
-		#slowing things down
-		new_audio_data = soundtouch.shiftTempo(audiofile[beat],tempoREDpc)
-
-		#reading drone chunk by chunk
-		drone_chunk = dronefile[drone_index:drone_index+ new_audio_data.data.shape[0]]
-		drone_index = drone_index + new_audio_data.data.shape[0]
-
-		# adding drone signal
-		new_audio_data = audio.mix(new_audio_data,drone_chunk, 0.5) 
-
-		output.append(new_audio_data)
-	    
-	    
-		#check if the beat counter for drone might cross the drone duration
-		if drone_index > (dronefiledutation-(2*beat.duration))*dronefile.sampleRate:
-			drone_index=0
-	
-	output = AddTabla(output,audiofile.analysis.bars, audiofile.analysis.sections, tempoREDpc, taal, strokes)		
-	'''print "started tabla strokes addition"
-	for i, tatum in enumerate(audiofile.analysis.tatums[2:-1]):
-		
-		onset = (tatum.end - tatum.duration)
-		print onset
-		print type(strokes[tablaaudio2(i,taal)])
-		output.add_at(onset,strokes[tablaaudio2(i,taal)])
-		'''
-	
-	output.encode(outputfile)
+    output = AddTabla(output,beats, [], tempoREDpc, taal, strokes)        
+    '''print "started tabla strokes addition"
+    for i, tatum in enumerate(audiofile.analysis.tatums[2:-1]):
+        
+        onset = (tatum.end - tatum.duration)
+        print onset
+        print type(strokes[tablaaudio2(i,taal)])
+        output.add_at(onset,strokes[tablaaudio2(i,taal)])
+        '''
+    
+    #output.encode(outputfile) #TODO: remove
+    ess.MonoWriter(filename = 'output.mp3', format = 'mp3', sampleRate = fs)(output)
 
 def AddTabla(audiodata, bars, sections, tempofactor, taal, strokes):
-	
-	if tempofactor <=0.5:
-		New_bars = [None]*(len(bars) + len(bars))
-		New_bars[::2] = deepcopy(bars)
-		New_bars[1::2] = deepcopy(bars)
-	
-		for i,bar in enumerate(New_bars):
-			
-			if i%2 ==0:
-				New_bars[i].duration= New_bars[i].duration/2
-			else:
-				New_bars[i].start = New_bars[i-1].start + New_bars[i-1].duration
-				New_bars[i].duration = New_bars[i].duration/2
-				
-		bars = deepcopy(New_bars)
-	
-	if taal == 'teental':
+    
+    if tempofactor <=0.5:
+        New_bars = [None]*(len(bars) + len(bars))
+        New_bars[::2] = deepcopy(bars)
+        New_bars[1::2] = deepcopy(bars)
+    
+        for i,bar in enumerate(New_bars):
+            
+            if i%2 ==0:
+                New_bars[i].duration= New_bars[i].duration/2
+            else:
+                New_bars[i].start = New_bars[i-1].start + New_bars[i-1].duration
+                New_bars[i].duration = New_bars[i].duration/2
+                
+        bars = deepcopy(New_bars)
+    
+    if taal == 'teental':
 
-		for i,bar in enumerate(bars):
-			if i%2 == 0:
-				bar_onset = bar.start/tempofactor
-				bar_duration = bar.duration/tempofactor
-			if i%2 ==1:
-				bar_duration = bar_duration + (bar.duration/tempofactor)
-				for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
-					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['normal']['durratio'][j]) ,strokes[bol])
-			
-	else:
-		section_cnt =0 ;
-		for i,bar in enumerate(bars):
-			section_offset = sections[section_cnt].start + sections[section_cnt].duration
-			if bar.end >= section_offset:
-				#print "hello"
-				play_roll =1
-				section_cnt = section_cnt+1
-			else:
-				play_roll = 0
-			bar_onset = bar.start/tempofactor
-			bar_duration = bar.duration/tempofactor
-			
-			if play_roll ==0:
-				for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
-					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['normal']['durratio'][j]) ,strokes[bol])
-			else:
-				for j, bol in enumerate(TalaInfoFULL[taal]['roll']['bols']):
-					audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['roll']['durratio'][j]) ,strokes[bol])
-			
+        for i,bar in enumerate(bars):
+            if i%2 == 0:
+                bar_onset = bar.start/tempofactor
+                bar_duration = bar.duration/tempofactor
+            if i%2 ==1:
+                bar_duration = bar_duration + (bar.duration/tempofactor)
+                for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
+                    audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['normal']['durratio'][j]) ,strokes[bol])
+            
+    else:
+        section_cnt =0 ;
+        for i,bar in enumerate(bars):
+            section_offset = sections[section_cnt].start + sections[section_cnt].duration
+            if bar.end >= section_offset:
+                #print "hello"
+                play_roll =1
+                section_cnt = section_cnt+1
+            else:
+                play_roll = 0
+            bar_onset = bar.start/tempofactor
+            bar_duration = bar.duration/tempofactor
+            
+            if play_roll ==0:
+                for j, bol in enumerate(TalaInfoFULL[taal]['normal']['bols']):
+                    audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['normal']['durratio'][j]) ,strokes[bol])
+            else:
+                for j, bol in enumerate(TalaInfoFULL[taal]['roll']['bols']):
+                    audiodata.add_at(bar_onset + (bar_duration*TalaInfoFULL[taal]['roll']['durratio'][j]) ,strokes[bol])
+            
 
-	return audiodata
-	
-		
+    return audiodata
+    
+        
 def tablaaudio2(tatumcnt, taal):
-	
-	index = numpy.mod(tatumcnt, len(TalaInfo[taal]))
+    
+    index = numpy.mod(tatumcnt, len(TalaInfo[taal]))
 
-	return TalaInfo[taal][index]
+    return TalaInfo[taal][index]
       
       
 def mono_to_stereo(audio_data):
-	data = audio_data.data.flatten().tolist()
-	new_data = numpy.array((data,data))
-	audio_data.data = new_data.swapaxes(0,1)
-	audio_data.numChannels = 2
-	return audio_data
+    data = audio_data.data.flatten().tolist()
+    new_data = numpy.array((data,data))
+    audio_data.data = new_data.swapaxes(0,1)
+    audio_data.numChannels = 2
+    return audio_data
   
   
 def tablaaudio(downbeatcnt, beatcnt, tatumcnt, taal):
-	
-	index = downbeatcnt*8 + beatcnt*2 + tatumcnt
-	
-	return TalaInfo[taal][index]
+    
+    index = downbeatcnt*8 + beatcnt*2 + tatumcnt
+    
+    return TalaInfo[taal][index]
       
 
 def GetDroneFileandTransIndex(key, mode):
-	abs_diff = numpy.abs(DroneScales-key)
-	index = numpy.argmin(abs_diff)
-	
-	transposition = key-DroneScales[index]
-	print  Dronefiles[DroneNotes[index]], transposition
-	return Dronefiles[DroneNotes[index]], transposition
-	
+    abs_diff = numpy.abs(DroneScales-key)
+    index = numpy.argmin(abs_diff)
+    
+    transposition = key-DroneScales[index]
+    print  Dronefiles[DroneNotes[index]], transposition
+    return Dronefiles[DroneNotes[index]], transposition
+    
 
 def AddGamakas(inputfile, outputfile):
 
-	soundtouch = modify.Modify()
+    soundtouch = modify.Modify()
   
-  	# reading input file and performning audio analsis
-	audiofile = audio.LocalAudioFile(inputfile)
-	key = audiofile.analysis.key['value']
-	mode = audiofile.analysis.mode['value']
+      # reading input file and performning audio analsis
+    audiofile = audio.LocalAudioFile(inputfile)
+    key = audiofile.analysis.key['value']
+    mode = audiofile.analysis.mode['value']
     
-	beats = audiofile.analysis.beats
-	outputshape = (len(audiofile.data),)
-	output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
-	
-	sr = audiofile.sampleRate
-	wlen = 0.1
-	framelen=int(math.floor(wlen*sr))
-	nos = int(math.floor(audiofile.duration/wlen))
-	
-	for ii in range(0,nos):
-		audiodata = audiofile[ii*framelen:(ii+1)*framelen,:]
-		ratio = 2*math.sin(2*math.pi*ii*wlen*4)
-		#print ratio
-		new_data = soundtouch.shiftPitchSemiTones(audiodata, semitones = int(math.floor(ratio + 0.5)))
-		output.append(new_data)
-	
-	output.encode(outputfile)
-		
-	
-	
+    beats = audiofile.analysis.beats
+    outputshape = (len(audiofile.data),)
+    output = audio.AudioData(shape=outputshape, numChannels=1, sampleRate=44100)
+    
+    sr = audiofile.sampleRate
+    wlen = 0.1
+    framelen=int(math.floor(wlen*sr))
+    nos = int(math.floor(audiofile.duration/wlen))
+    
+    for ii in range(0,nos):
+        audiodata = audiofile[ii*framelen:(ii+1)*framelen,:]
+        ratio = 2*math.sin(2*math.pi*ii*wlen*4)
+        #print ratio
+        new_data = soundtouch.shiftPitchSemiTones(audiodata, semitones = int(math.floor(ratio + 0.5)))
+        output.append(new_data)
+    
+    output.encode(outputfile)
+        
+    
+    
 if __name__=="__main__":
   
-  	# Python script to transform an audio song into a Hindustani music piece :D
-  	# arguments:
-  	# <pythonfile><inputaudio><outputaudio><tempofactor(1 = no change)><taal(rhythm cycle)>
-  	
-	inputfile = sys.argv[1]
-	outputfile = sys.argv[2]
-	tempoREDpc = sys.argv[3]
-	taal = sys.argv[4]
-	
-	Hindustanify_main(inputfile, outputfile, float(tempoREDpc), taal)
-	
+      # Python script to transform an audio song into a Hindustani music piece :D
+      # arguments:
+      # <pythonfile><inputaudio><outputaudio><tempofactor(1 = no change)><taal(rhythm cycle)>
+      
+    inputfile = sys.argv[1]
+    outputfile = sys.argv[2]
+    tempoREDpc = sys.argv[3]
+    taal = sys.argv[4]
+    
+    Hindustanify_main(inputfile, outputfile, float(tempoREDpc), taal)
+    
   
 
